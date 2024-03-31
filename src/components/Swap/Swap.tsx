@@ -133,6 +133,7 @@ export const Swap: React.FC<ISwap> = ({
   }
   const [tokenFromIndex, setTokenFromIndex] = React.useState<number | null>(null)
   const [tokenToIndex, setTokenToIndex] = React.useState<number | null>(null)
+  const [tokenTo2Index, setTokenTo2Index] = React.useState<number | null>(null)
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null)
   const [lockAnimation, setLockAnimation] = React.useState<boolean>(false)
   const [amountFrom, setAmountFrom] = React.useState<string>('')
@@ -566,12 +567,12 @@ export const Swap: React.FC<ISwap> = ({
           <ExchangeAmountInput
             value={amountTo}
             balance={
-              tokenToIndex !== null
-                ? printBN(tokens[tokenToIndex].balance, tokens[tokenToIndex].decimals)
+              tokenTo2Index !== null
+                ? printBN(tokens[tokenTo2Index].balance, tokens[tokenTo2Index].decimals)
                 : '- -'
             }
             className={classes.amountInput}
-            decimal={tokenToIndex !== null ? tokens[tokenToIndex].decimals : 6}
+            decimal={tokenTo2Index !== null ? tokens[tokenTo2Index].decimals : 6}
             setValue={value => {
               if (value.match(/^\d*\.?\d*$/)) {
                 setAmountTo(value)
@@ -595,8 +596,8 @@ export const Swap: React.FC<ISwap> = ({
               }
             }}
             tokens={tokens}
-            current={tokenToIndex !== null ? tokens[tokenToIndex] : null}
-            onSelect={setTokenToIndex}
+            current={tokenTo2Index !== null ? tokens[tokenTo2Index] : null}
+            onSelect={setTokenTo2Index}
             disabled={tokenFromIndex === null}
             hideBalancesInModal={walletStatus !== Status.Initialized}
             handleAddToken={handleAddToken}
