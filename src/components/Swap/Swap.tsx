@@ -608,6 +608,51 @@ export const Swap: React.FC<ISwap> = ({
             percentageChange={tokenToPriceData?.priceChange}
             priceLoading={priceToLoading}
           />
+          <ExchangeAmountInput
+            value={amountTo}
+            balance={
+              tokenToIndex !== null
+                ? printBN(tokens[tokenToIndex].balance, tokens[tokenToIndex].decimals)
+                : '- -'
+            }
+            className={classes.amountInput}
+            decimal={tokenToIndex !== null ? tokens[tokenToIndex].decimals : 6}
+            setValue={value => {
+              if (value.match(/^\d*\.?\d*$/)) {
+                setAmountTo(value)
+                setInputRef(inputTarget.TO)
+              }
+            }}
+            placeholder={`0.${'0'.repeat(6)}`}
+            onMaxClick={() => {
+              if (tokenFromIndex !== null) {
+                setInputRef(inputTarget.FROM)
+                setAmountFrom(
+                  printBN(
+                    tokens[tokenFromIndex].assetAddress.equals(new PublicKey(WRAPPED_SOL_ADDRESS))
+                      ? tokens[tokenFromIndex].balance.gt(WSOL_MIN_DEPOSIT_SWAP_FROM_AMOUNT)
+                        ? tokens[tokenFromIndex].balance.sub(WSOL_MIN_DEPOSIT_SWAP_FROM_AMOUNT)
+                        : new BN(0)
+                      : tokens[tokenFromIndex].balance,
+                    tokens[tokenFromIndex].decimals
+                  )
+                )
+              }
+            }}
+            tokens={tokens}
+            current={tokenToIndex !== null ? tokens[tokenToIndex] : null}
+            onSelect={setTokenToIndex}
+            disabled={tokenFromIndex === null}
+            hideBalancesInModal={walletStatus !== Status.Initialized}
+            handleAddToken={handleAddToken}
+            commonTokens={commonTokens}
+            limit={1e14}
+            initialHideUnknownTokensValue={initialHideUnknownTokensValue}
+            onHideUnknownTokensChange={onHideUnknownTokensChange}
+            tokenPrice={tokenToPriceData?.price}
+            percentageChange={tokenToPriceData?.priceChange}
+            priceLoading={priceToLoading}
+          />
         </Box>
         <Box className={classes.transactionDetails}>
           <button
