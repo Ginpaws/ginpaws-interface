@@ -57,7 +57,7 @@ const IdoLabel: React.FC<IdoLabelInterface> = ({
         </Box>
       </Grid>
       <Grid className={classNames(classes.lightLabelContainer, classes.bottomLabelRadius)}>
-        <Typography component='p'>INVARIANT for sale</Typography>
+        <Typography component='p'>Ginpaws for sale</Typography>
         <Box className={classes.timeContainer}>
           <CardMedia className={classes.image} image={icons.LogoShort} />
           <Typography component='h1'>{invariant}</Typography>

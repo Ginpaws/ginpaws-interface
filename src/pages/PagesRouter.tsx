@@ -90,7 +90,7 @@ export const PagesRouter: React.FC = () => {
             </Redirect>
           </Route>
         </Switch>
-        <Footer />
+        {/* <Footer /> */}
       </div>
     </Router>
   )

@@ -30,7 +30,6 @@ export const WrappedSwap = () => {
   const dispatch = useDispatch()
 
   const connection = getCurrentSolanaConnection()
-
   const walletStatus = useSelector(status)
   const swap = useSelector(swapPool)
   const tickmap = useSelector(tickMaps)
@@ -189,29 +188,34 @@ export const WrappedSwap = () => {
           })
         )
       }}
-      onSwap={(
-        slippage,
-        estimatedPriceAfterSwap,
-        tokenFrom,
-        tokenTo,
-        poolIndex,
-        amountIn,
-        amountOut,
-        byAmountIn
+      onDoneSwap={() => {
+        setProgress('none')
+
+      }}
+      onSwap={
+        (
+        // slippage,
+        // estimatedPriceAfterSwap,
+        // tokenFrom,
+        // tokenTo,
+        // poolIndex,
+        // amountIn,
+        // amountOut,
+        // byAmountIn
       ) => {
         setProgress('progress')
-        dispatch(
-          actions.swap({
-            slippage,
-            estimatedPriceAfterSwap,
-            poolIndex,
-            tokenFrom,
-            tokenTo,
-            amountIn,
-            amountOut,
-            byAmountIn
-          })
-        )
+        // dispatch(
+        //   actions.swap({
+        //     slippage,
+        //     estimatedPriceAfterSwap,
+        //     poolIndex,
+        //     tokenFrom,
+        //     tokenTo,
+        //     amountIn,
+        //     amountOut,
+        //     byAmountIn
+        //   })
+        // )
       }}
       onSetPair={(tokenFrom, tokenTo) => {
         setTokenFrom(tokenFrom)

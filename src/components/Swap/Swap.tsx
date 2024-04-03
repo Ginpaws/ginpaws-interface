@@ -16,11 +16,11 @@ import { Decimal, Tickmap } from '@invariant-labs/sdk/lib/market'
 import { fromFee } from '@invariant-labs/sdk/lib/utils'
 import { Tick } from '@invariant-labs/sdk/src/market'
 import { Box, Button, CardMedia, Grid, Typography } from '@material-ui/core'
-import { BN } from '@project-serum/anchor'
+import { BN, web3 } from '@project-serum/anchor'
 import { PoolWithAddress } from '@reducers/pools'
 import { Status } from '@reducers/solanaWallet'
 import { Swap as SwapData } from '@reducers/swap'
-import { PublicKey } from '@solana/web3.js'
+import { PublicKey, Transaction } from '@solana/web3.js'
 import infoIcon from '@static/svg/info.svg'
 import refreshIcon from '@static/svg/refresh.svg'
 import settingIcon from '@static/svg/settings.svg'
@@ -30,7 +30,15 @@ import React, { useEffect, useRef, useState } from 'react'
 import ExchangeRate from './ExchangeRate/ExchangeRate'
 import TransactionDetailsBox from './TransactionDetailsBox/TransactionDetailsBox'
 import useStyles from './style'
-
+import axios from 'axios'
+import {useSelector} from 'react-redux'
+import solanaConnectionSelectors from '@selectors/solanaConnection'
+import solanaWalletSelectors from '@selectors/solanaWallet'
+import {getCurrentSolanaConnection, getSolanaConnection} from '@web3/connection'
+import {getSolanaWallet} from '@web3/wallet'
+import { combineInstructions, loadInnerSimpleV0Transaction, sendTx } from '../../utils'
+import {TxVersion, buildSimpleTransaction} from '@raydium-io/raydium-sdk'
+import {InnerSimpleTransaction} from 'src/type'
 export interface SwapToken {
   balance: BN
   decimals: number
@@ -69,16 +77,8 @@ export interface ISwap {
   tokens: SwapToken[]
   pools: PoolWithAddress[]
   tickmap: { [x: string]: Tickmap }
-  onSwap: (
-    slippage: Decimal,
-    knownPrice: Decimal,
-    tokenFrom: PublicKey,
-    tokenTo: PublicKey,
-    poolIndex: number,
-    amountIn: BN,
-    amountOut: BN,
-    byAmountIn: boolean
-  ) => void
+  onSwap: () => void
+  onDoneSwap:() => void
   onSetPair: (tokenFrom: PublicKey | null, tokenTo: PublicKey | null) => void
   progress: ProgressState
   poolTicks: { [x: string]: Tick[] }
@@ -107,6 +107,7 @@ export const Swap: React.FC<ISwap> = ({
   pools,
   tickmap,
   onSwap,
+  onDoneSwap,
   onSetPair,
   progress,
   poolTicks,
@@ -138,6 +139,7 @@ export const Swap: React.FC<ISwap> = ({
   const [lockAnimation, setLockAnimation] = React.useState<boolean>(false)
   const [amountFrom, setAmountFrom] = React.useState<string>('')
   const [amountTo, setAmountTo] = React.useState<string>('')
+  const [amountTo2, setAmountTo2] = React.useState<string>('')
   const [swap, setSwap] = React.useState<boolean | null>(null)
   const [rotates, setRotates] = React.useState<number>(0)
   const [slippTolerance, setSlippTolerance] = React.useState<string>(initialSlippage)
@@ -146,6 +148,8 @@ export const Swap: React.FC<ISwap> = ({
   const [detailsOpen, setDetailsOpen] = React.useState<boolean>(false)
   const [inputRef, setInputRef] = React.useState<string>(inputTarget.FROM)
   const [rateReversed, setRateReversed] = React.useState<boolean>(false)
+  const walletPublicKey= useSelector(solanaWalletSelectors.address)
+
   const [simulateResult, setSimulateResult] = React.useState<{
     amountOut: BN
     poolIndex: number
@@ -268,8 +272,9 @@ export const Swap: React.FC<ISwap> = ({
   }
 
   const setSimulateAmount = async () => {
-    if (tokenFromIndex !== null && tokenToIndex !== null) {
+    if (tokenFromIndex !== null && tokenToIndex !== null && tokenTo2Index!== null && walletPublicKey.toBase58() !== '11111111111111111111111111111111' ) {
       const pair = findPairs(tokens[tokenFromIndex].address, tokens[tokenToIndex].address, pools)[0]
+    
       if (typeof pair === 'undefined') {
         setAmountTo('')
         return
@@ -356,9 +361,9 @@ export const Swap: React.FC<ISwap> = ({
       return 'Select different tokens'
     }
 
-    if (!getIsXToY(tokens[tokenFromIndex].assetAddress, tokens[tokenToIndex].assetAddress)) {
-      return 'No route found'
-    }
+    // if (!getIsXToY(tokens[tokenFromIndex].assetAddress, tokens[tokenToIndex].assetAddress)) {
+    //   return 'No route found'
+    // }
 
     if (
       isError('At the end of price range') ||
@@ -608,9 +613,11 @@ export const Swap: React.FC<ISwap> = ({
             tokenPrice={tokenToPriceData?.price}
             percentageChange={tokenToPriceData?.priceChange}
             priceLoading={priceToLoading}
+            disableInputAmount={true}
           />
           <ExchangeAmountInput
-            value={amountTo}
+            value={amountTo2}
+            disableInputAmount={true}
             balance={
               tokenToIndex !== null
                 ? printBN(tokens[tokenToIndex].balance, tokens[tokenToIndex].decimals)
@@ -620,7 +627,7 @@ export const Swap: React.FC<ISwap> = ({
             decimal={tokenToIndex !== null ? tokens[tokenToIndex].decimals : 6}
             setValue={value => {
               if (value.match(/^\d*\.?\d*$/)) {
-                setAmountTo(value)
+                setAmountTo2(value)
                 setInputRef(inputTarget.TO)
               }
             }}
@@ -664,6 +671,9 @@ export const Swap: React.FC<ISwap> = ({
               amountFrom !== '' &&
               amountTo !== ''
                 ? handleOpenTransactionDetails
+                : undefined &&
+              amountTo2 !== ''
+                ? handleOpenTransactionDetails
                 : undefined
             }
             className={
@@ -672,6 +682,9 @@ export const Swap: React.FC<ISwap> = ({
               hasShowRateMessage() &&
               amountFrom !== '' &&
               amountTo !== ''
+                ? classes.HiddenTransactionButton
+                : classes.transactionDetailDisabled &&
+                amountTo2 !== ''
                 ? classes.HiddenTransactionButton
                 : classes.transactionDetailDisabled
             }>
@@ -735,21 +748,57 @@ export const Swap: React.FC<ISwap> = ({
                 : classes.swapButton
             }
             disabled={getStateMessage() !== 'Swap tokens' || progress !== 'none'}
-            onClick={() => {
-              if (tokenFromIndex === null || tokenToIndex === null) return
+            onClick={async () => {
+              if (tokenFromIndex === null || tokenToIndex === null || tokenTo2Index === null) return
+              const input = {
+                tokenIn: tokens[tokenFromIndex],
+                amountTokenIn: String(Number(amountFrom) * 10**9),
+                tokenOut1: tokens[tokenToIndex],
+                tokenOut2: tokens[tokenTo2Index],
+                wallet: walletPublicKey
+              }
+              const connection = getCurrentSolanaConnection()
+              const wallet = getSolanaWallet()
+              if(!connection || !wallet.publicKey) return
+              // console.log('wallet', wallet.signTransaction())
+              onSwap()
+               axios.post("http://localhost:8080/x_ab", JSON.parse(JSON.stringify(input)))
+               .then(async res => {
+                onDoneSwap()
+                console.log(res.data)
+                const innerTransactions = loadInnerSimpleV0Transaction(res.data);
+                const instructions:any = combineInstructions(innerTransactions);
+                const transactions:Transaction[] = [];
+                instructions.map((ina:any) => {
+                  const tx = new Transaction().add(ina);
+                  tx.feePayer = wallet.publicKey; // Specify the wallet's public key as the fee payer
+                  transactions.push(tx)
+                })
+                const recentBlockhash = await connection.getRecentBlockhash();
 
-              onSwap(
-                { v: fromFee(new BN(Number(+slippTolerance * 1000))) },
-                {
-                  v: simulateResult.estimatedPriceAfterSwap
-                },
-                tokens[tokenFromIndex].address,
-                tokens[tokenToIndex].address,
-                simulateResult.poolIndex,
-                printBNtoBN(amountFrom, tokens[tokenFromIndex].decimals),
-                printBNtoBN(amountTo, tokens[tokenToIndex].decimals),
-                inputRef === inputTarget.FROM
-              )
+              transactions.forEach(tx => {
+                  tx.recentBlockhash = recentBlockhash.blockhash;
+              });
+
+              console.log(recentBlockhash,instructions,transactions)
+              await wallet.signAllTransactions(transactions)
+              })
+              .catch(e => {
+                console.log(e)
+                onDoneSwap()
+              });
+              // onSwap(
+              //   { v: fromFee(new BN(Number(+slippTolerance * 1000))) },
+              //   {
+              //     v: simulateResult.estimatedPriceAfterSwap
+              //   },
+              //   tokens[tokenFromIndex].address,
+              //   tokens[tokenToIndex].address,
+              //   simulateResult.poolIndex,
+              //   printBNtoBN(amountFrom, tokens[tokenFromIndex].decimals),
+              //   printBNtoBN(amountTo, tokens[tokenToIndex].decimals),
+              //   inputRef === inputTarget.FROM
+              // )
             }}
             progress={progress}
           />

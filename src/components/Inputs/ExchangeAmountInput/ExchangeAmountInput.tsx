@@ -32,6 +32,7 @@ interface IProps {
   percentageChange?: number
   tokenPrice?: number
   priceLoading?: boolean
+  disableInputAmount?: boolean
 }
 
 export const AmountInput: React.FC<IProps> = ({
@@ -50,6 +51,7 @@ export const AmountInput: React.FC<IProps> = ({
   balance,
   hideBalancesInModal = false,
   handleAddToken,
+  disableInputAmount= false,
   commonTokens,
   limit,
   initialHideUnknownTokensValue,
@@ -179,6 +181,7 @@ export const AmountInput: React.FC<IProps> = ({
         />
         <Input
           inputRef={inputRef}
+          disabled= {disableInputAmount}
           error={!!error}
           className={classNames(classes.amountInput, className)}
           classes={{ input: classes.input }}

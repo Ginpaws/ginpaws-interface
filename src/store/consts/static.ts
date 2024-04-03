@@ -24,8 +24,8 @@ export interface Token {
 export const PRICE_DECIMAL = 24
 export const USDC_DEV: Token = {
   symbol: 'USDC',
-  address: new PublicKey(MOCK_TOKENS.USDC),
-  decimals: 6,
+  address: new PublicKey('9T7uw5dqaEmEC4McqyefzYsEg5hoC4e2oV8it1Uc4f1U'),
+  decimals: 9,
   name: 'USD Coin',
   logoURI:
     'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
@@ -34,7 +34,7 @@ export const USDC_DEV: Token = {
 export const USDT_DEV: Token = {
   symbol: 'USDT',
   address: new PublicKey(MOCK_TOKENS.USDT),
-  decimals: 6,
+  decimals: 9,
   name: 'Tether USD',
   logoURI:
     'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.svg',
@@ -60,8 +60,8 @@ export const MSOL_DEV = {
 }
 export const BTC_DEV: Token = {
   symbol: 'BTC',
-  address: new PublicKey(MOCK_TOKENS.BTC),
-  decimals: 6,
+  address: new PublicKey('GAsF4qWPJkX23TvyDYrRzm9UgLzd5KE7MD7okAU3cuth'),
+  decimals: 9,
   name: 'Wrapped Bitcoin (Sollet)',
   logoURI:
     'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E/logo.png',
@@ -195,7 +195,7 @@ const mainnetBestTiersCreator = () => {
   const unstableTokens = {
     SOL: new PublicKey('So11111111111111111111111111111111111111112'),
     stSOL: new PublicKey('7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj'),
-    BTC: new PublicKey('9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E'),
+    BTC: new PublicKey('GAsF4qWPJkX23TvyDYrRzm9UgLzd5KE7MD7okAU3cuth'),
     ETH: new PublicKey('7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs'),
     mSOL: new PublicKey('mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So')
   }

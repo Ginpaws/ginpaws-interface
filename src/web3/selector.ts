@@ -4,7 +4,7 @@ export const nightlyConnectAdapter: NightlyConnectAdapter = NightlyConnectAdapte
   {
     appMetadata: {
       name: 'Invariant',
-      description: 'Invariant - AMM DEX provided concentrated liquidity',
+      description: 'Ginpaws - Aggregator liquidity provided',
       icon: 'https://invariant.app/favicon-192x192.png'
     },
     url: 'https://nc2.nightly.app'
