@@ -31,14 +31,14 @@ import ExchangeRate from './ExchangeRate/ExchangeRate'
 import TransactionDetailsBox from './TransactionDetailsBox/TransactionDetailsBox'
 import useStyles from './style'
 import axios from 'axios'
-import {useSelector} from 'react-redux'
+import { useSelector } from 'react-redux'
 import solanaConnectionSelectors from '@selectors/solanaConnection'
 import solanaWalletSelectors from '@selectors/solanaWallet'
-import {getCurrentSolanaConnection, getSolanaConnection} from '@web3/connection'
-import {getSolanaWallet} from '@web3/wallet'
+import { getCurrentSolanaConnection, getSolanaConnection } from '@web3/connection'
+import { getSolanaWallet } from '@web3/wallet'
 import { combineInstructions, loadInnerSimpleV0Transaction, sendTx } from '../../utils'
-import {TxVersion, buildSimpleTransaction} from '@raydium-io/raydium-sdk'
-import {InnerSimpleTransaction} from 'src/type'
+import { TxVersion, buildSimpleTransaction } from '@raydium-io/raydium-sdk'
+import { InnerSimpleTransaction } from 'src/type'
 export interface SwapToken {
   balance: BN
   decimals: number
@@ -78,7 +78,7 @@ export interface ISwap {
   pools: PoolWithAddress[]
   tickmap: { [x: string]: Tickmap }
   onSwap: () => void
-  onDoneSwap:() => void
+  onDoneSwap: () => void
   onSetPair: (tokenFrom: PublicKey | null, tokenTo: PublicKey | null) => void
   progress: ProgressState
   poolTicks: { [x: string]: Tick[] }
@@ -148,7 +148,7 @@ export const Swap: React.FC<ISwap> = ({
   const [detailsOpen, setDetailsOpen] = React.useState<boolean>(false)
   const [inputRef, setInputRef] = React.useState<string>(inputTarget.FROM)
   const [rateReversed, setRateReversed] = React.useState<boolean>(false)
-  const walletPublicKey= useSelector(solanaWalletSelectors.address)
+  const walletPublicKey = useSelector(solanaWalletSelectors.address)
 
   const [simulateResult, setSimulateResult] = React.useState<{
     amountOut: BN
@@ -272,9 +272,14 @@ export const Swap: React.FC<ISwap> = ({
   }
 
   const setSimulateAmount = async () => {
-    if (tokenFromIndex !== null && tokenToIndex !== null && tokenTo2Index!== null && walletPublicKey.toBase58() !== '11111111111111111111111111111111' ) {
+    if (
+      tokenFromIndex !== null &&
+      tokenToIndex !== null &&
+      tokenTo2Index !== null &&
+      walletPublicKey.toBase58() !== '11111111111111111111111111111111'
+    ) {
       const pair = findPairs(tokens[tokenFromIndex].address, tokens[tokenToIndex].address, pools)[0]
-    
+
       if (typeof pair === 'undefined') {
         setAmountTo('')
         return
@@ -671,8 +676,7 @@ export const Swap: React.FC<ISwap> = ({
               amountFrom !== '' &&
               amountTo !== ''
                 ? handleOpenTransactionDetails
-                : undefined &&
-              amountTo2 !== ''
+                : undefined && amountTo2 !== ''
                 ? handleOpenTransactionDetails
                 : undefined
             }
@@ -683,8 +687,7 @@ export const Swap: React.FC<ISwap> = ({
               amountFrom !== '' &&
               amountTo !== ''
                 ? classes.HiddenTransactionButton
-                : classes.transactionDetailDisabled &&
-                amountTo2 !== ''
+                : classes.transactionDetailDisabled && amountTo2 !== ''
                 ? classes.HiddenTransactionButton
                 : classes.transactionDetailDisabled
             }>
@@ -752,41 +755,41 @@ export const Swap: React.FC<ISwap> = ({
               if (tokenFromIndex === null || tokenToIndex === null || tokenTo2Index === null) return
               const input = {
                 tokenIn: tokens[tokenFromIndex],
-                amountTokenIn: String(Number(amountFrom) * 10**9),
+                amountTokenIn: String(Number(amountFrom) * 10 ** 9),
                 tokenOut1: tokens[tokenToIndex],
                 tokenOut2: tokens[tokenTo2Index],
                 wallet: walletPublicKey
               }
               const connection = getCurrentSolanaConnection()
               const wallet = getSolanaWallet()
-              if(!connection || !wallet.publicKey) return
+              if (!connection || !wallet.publicKey) return
               // console.log('wallet', wallet.signTransaction())
               onSwap()
-               axios.post("http://localhost:8080/x_ab", JSON.parse(JSON.stringify(input)))
-               .then(async res => {
-                onDoneSwap()
-                console.log(res.data)
-                const innerTransactions = loadInnerSimpleV0Transaction(res.data);
-                const instructions:any = combineInstructions(innerTransactions);
-                const transactions:Transaction[] = [];
-                instructions.map((ina:any) => {
-                  const tx = new Transaction().add(ina);
-                  tx.feePayer = wallet.publicKey; // Specify the wallet's public key as the fee payer
-                  transactions.push(tx)
+              axios
+                .post('https://ginpaws-server.onrender.com/x_ab', JSON.parse(JSON.stringify(input)))
+                .then(async res => {
+                  onDoneSwap()
+                  console.log(res.data)
+                  const innerTransactions = loadInnerSimpleV0Transaction(res.data)
+                  const instructions: any = combineInstructions(innerTransactions)
+                  const transactions: Transaction[] = []
+                  instructions.map((ina: any) => {
+                    const tx = new Transaction().add(ina)
+                    tx.feePayer = wallet.publicKey // Specify the wallet's public key as the fee payer
+                    transactions.push(tx)
+                  })
+                  const recentBlockhash = await connection.getRecentBlockhash()
+
+                  transactions.forEach(tx => {
+                    tx.recentBlockhash = recentBlockhash.blockhash
+                  })
+
+                  await wallet.signAndSendAllTransactions(transactions)
                 })
-                const recentBlockhash = await connection.getRecentBlockhash();
-
-              transactions.forEach(tx => {
-                  tx.recentBlockhash = recentBlockhash.blockhash;
-              });
-
-              console.log(recentBlockhash,instructions,transactions)
-              await wallet.signAllTransactions(transactions)
-              })
-              .catch(e => {
-                console.log(e)
-                onDoneSwap()
-              });
+                .catch(e => {
+                  console.log(e)
+                  onDoneSwap()
+                })
               // onSwap(
               //   { v: fromFee(new BN(Number(+slippTolerance * 1000))) },
               //   {
