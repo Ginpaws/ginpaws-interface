@@ -134,9 +134,10 @@ export const Swap: React.FC<ISwap> = ({
   }
   const [tokenFromIndex, setTokenFromIndex] = React.useState<number | null>(null)
   const [tokenToIndex, setTokenToIndex] = React.useState<number | null>(null)
-  const [tokenTo2Index, setTokenTo2Index] = React.useState<number | null>(null)
+  const [tokenTo2Index, setTokenTo2Index] = React.useState<number | null>(1)
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null)
   const [lockAnimation, setLockAnimation] = React.useState<boolean>(false)
+  const [priceLoadingAll, setPriceLoadingAll] = useState(false)
   const [amountFrom, setAmountFrom] = React.useState<string>('')
   const [amountTo, setAmountTo] = React.useState<string>('')
   const [amountTo2, setAmountTo2] = React.useState<string>('')
@@ -237,7 +238,48 @@ export const Swap: React.FC<ISwap> = ({
     }, 100)
     timeoutRef.current = timeout as unknown as number
   }
+  useEffect(() => {
+    if (tokenFromIndex === null || tokenToIndex === null || tokenTo2Index === null) return
+    const input = {
+      tokenIn: tokens[tokenFromIndex],
+      amountTokenIn: String(Number(Number(amountFrom).toFixed(0)) * 10 ** 9),
+      tokenOut1: tokens[tokenToIndex],
+      tokenOut2: tokens[tokenTo2Index],
+      wallet: walletPublicKey
+    }
+    const connection = getCurrentSolanaConnection()
+    const wallet = getSolanaWallet()
+    if (!connection || !wallet.publicKey) return
+    setPriceLoadingAll(true)
+    axios
+      .post('http://localhost:8080/getTokenOutAmount_xab', JSON.parse(JSON.stringify(input)))
+      .then(async res => {
+        const data = res.data
+        setAmountTo(String(Number(data?.amountTokenA || 0) / (10 ** tokens[tokenToIndex].decimals)))
+        setAmountTo2(String(Number(data?.amountTokenB || 0) / (10 ** tokens[tokenTo2Index].decimals)))
+        setPriceLoadingAll(false)
+        // onDoneSwap()
+        // const innerTransactions = loadInnerSimpleV0Transaction(res.data)
+        // const instructions: any = combineInstructions(innerTransactions)
+        // const transactions: Transaction[] = []
+        // instructions.map((ina: any) => {
+        //   const tx = new Transaction().add(ina)
+        //   tx.feePayer = wallet.publicKey // Specify the wallet's public key as the fee payer
+        //   transactions.push(tx)
+        // })
+        // const recentBlockhash = await connection.getRecentBlockhash()
 
+        // transactions.forEach(tx => {
+        //   tx.recentBlockhash = recentBlockhash.blockhash
+        // })
+
+        // await wallet.signAndSendAllTransactions(transactions)
+      })
+      .catch(e => {
+        setPriceLoadingAll(false)
+        console.log(e)
+      })
+  },[tokenFromIndex, tokenToIndex, tokenTo2Index, amountFrom])
   useEffect(() => {
     if (tokenFromIndex !== null && tokenToIndex !== null) {
       if (inputRef === inputTarget.FROM) {
@@ -617,7 +659,7 @@ export const Swap: React.FC<ISwap> = ({
             onHideUnknownTokensChange={onHideUnknownTokensChange}
             tokenPrice={tokenToPriceData?.price}
             percentageChange={tokenToPriceData?.priceChange}
-            priceLoading={priceToLoading}
+            priceLoading={priceLoadingAll}
             disableInputAmount={true}
           />
           <ExchangeAmountInput
@@ -664,7 +706,7 @@ export const Swap: React.FC<ISwap> = ({
             onHideUnknownTokensChange={onHideUnknownTokensChange}
             tokenPrice={tokenToPriceData?.price}
             percentageChange={tokenToPriceData?.priceChange}
-            priceLoading={priceToLoading}
+            priceLoading={priceLoadingAll}
           />
         </Box>
         <Box className={classes.transactionDetails}>
@@ -709,7 +751,7 @@ export const Swap: React.FC<ISwap> = ({
             />
           ) : null}
         </Box>
-        <TransactionDetailsBox
+        {/* <TransactionDetailsBox
           open={getStateMessage() !== 'Loading' ? detailsOpen && canShowDetails : prevOpenState}
           fee={{
             v: canShowDetails ? pools[simulateResult.poolIndex].fee.v : new BN(0)
@@ -731,7 +773,7 @@ export const Swap: React.FC<ISwap> = ({
           priceImpact={simulateResult.priceImpact}
           slippage={+slippTolerance}
           isLoadingRate={getStateMessage() === 'Loading'}
-        />
+        /> */}
         {walletStatus !== Status.Initialized && getStateMessage() !== 'Loading' ? (
           <ChangeWalletButton
             name='Connect wallet'
