@@ -134,7 +134,7 @@ export const Swap: React.FC<ISwap> = ({
   }
   const [tokenFromIndex, setTokenFromIndex] = React.useState<number | null>(null)
   const [tokenToIndex, setTokenToIndex] = React.useState<number | null>(null)
-  const [tokenTo2Index, setTokenTo2Index] = React.useState<number | null>(1)
+  const [tokenTo2Index, setTokenTo2Index] = React.useState<number | null>(null)
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null)
   const [lockAnimation, setLockAnimation] = React.useState<boolean>(false)
   const [priceLoadingAll, setPriceLoadingAll] = useState(false)
@@ -252,7 +252,7 @@ export const Swap: React.FC<ISwap> = ({
     if (!connection || !wallet.publicKey) return
     setPriceLoadingAll(true)
     axios
-      .post('http://localhost:8080/getTokenOutAmount_xab', JSON.parse(JSON.stringify(input)))
+      .post('https://ginpaws-server.onrender.com/getTokenOutAmount_xab', JSON.parse(JSON.stringify(input)))
       .then(async res => {
         const data = res.data
         setAmountTo(String(Number(data?.amountTokenA || 0) / (10 ** tokens[tokenToIndex].decimals)))
@@ -619,12 +619,12 @@ export const Swap: React.FC<ISwap> = ({
           <ExchangeAmountInput
             value={amountTo}
             balance={
-              tokenTo2Index !== null
-                ? printBN(tokens[tokenTo2Index].balance, tokens[tokenTo2Index].decimals)
+              tokenTo2Index !== null && tokens[tokenTo2Index]?.balance && tokens[tokenTo2Index]?.decimals
+                ? printBN(tokens[tokenTo2Index]?.balance, tokens[tokenTo2Index]?.decimals)
                 : '- -'
             }
             className={classes.amountInput}
-            decimal={tokenTo2Index !== null ? tokens[tokenTo2Index].decimals : 6}
+            decimal={tokenTo2Index !== null ? (tokens[tokenTo2Index].decimals || 9) : 6}
             setValue={value => {
               if (value.match(/^\d*\.?\d*$/)) {
                 setAmountTo(value)
@@ -667,7 +667,7 @@ export const Swap: React.FC<ISwap> = ({
             disableInputAmount={true}
             balance={
               tokenToIndex !== null
-                ? printBN(tokens[tokenToIndex].balance, tokens[tokenToIndex].decimals)
+                ? printBN(tokens[tokenToIndex]?.balance, tokens[tokenToIndex]?.decimals)
                 : '- -'
             }
             className={classes.amountInput}
