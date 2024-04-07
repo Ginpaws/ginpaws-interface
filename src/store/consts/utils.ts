@@ -399,18 +399,18 @@ export const getNetworkTokensList = (networkType: NetworkType): Record<string, T
     case NetworkType.DEVNET:
       return {
         [USDC_DEV.address.toString()]: USDC_DEV,
-        [USDT_DEV.address.toString()]: USDT_DEV,
-        [MSOL_DEV.address.toString()]: MSOL_DEV,
+        // [USDT_DEV.address.toString()]: USDT_DEV,
+        // [MSOL_DEV.address.toString()]: MSOL_DEV,
         [BTC_DEV.address.toString()]: BTC_DEV,
         [WSOL_DEV.address.toString()]: WSOL_DEV,
-        [RENDOGE_DEV.address.toString()]: RENDOGE_DEV,
-        [MCK_DEV.address.toString()]: MCK_DEV,
-        [VEMCK_DEV.address.toString()]: VEMCK_DEV,
-        [MC2_DEV.address.toString()]: MC2_DEV,
-        [VEMC2_DEV.address.toString()]: VEMC2_DEV,
-        [MC3_DEV.address.toString()]: MC3_DEV,
-        [USDH_DEV.address.toString()]: USDH_DEV,
-        [HBB_DEV.address.toString()]: HBB_DEV
+        // [RENDOGE_DEV.address.toString()]: RENDOGE_DEV,
+        // [MCK_DEV.address.toString()]: MCK_DEV,
+        // [VEMCK_DEV.address.toString()]: VEMCK_DEV,
+        // [MC2_DEV.address.toString()]: MC2_DEV,
+        // [VEMC2_DEV.address.toString()]: VEMC2_DEV,
+        // [MC3_DEV.address.toString()]: MC3_DEV,
+        // [USDH_DEV.address.toString()]: USDH_DEV,
+        // [HBB_DEV.address.toString()]: HBB_DEV
       }
     default:
       return {}
